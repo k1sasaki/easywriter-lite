@@ -536,6 +536,16 @@ a {
   if (!hasFsAccess) {
     document.getElementById("fs_hint").style.display = "block";
   }
+
+  // 関数自体はあっても、企業ポリシー等で呼び出すと実行時にブロックされる場合が
+  // ある(キャンセルと違い、AbortError以外の名前で失敗する)。一度でもそれを
+  // 検知したら、以後は毎回試して失敗するのをやめて最初からフォールバックに回し、
+  // 読み込み時チェックでは出なかった注意書きもここで出す
+  function markFsAccessUnavailable() {
+    hasFsAccess = false;
+    document.getElementById("fs_hint").style.display = "block";
+  }
+
   var currentHandle = null;
   var mdFileTypes = [{ description: "Markdown", accept: { "text/markdown": [".md"] } }];
 
@@ -581,6 +591,7 @@ a {
     } catch (e) {
       if (e && e.name === "AbortError") return; // ユーザーがキャンセルした場合
       // ポリシー等でAPI自体がブロックされている場合は、従来方式にフォールバックする
+      markFsAccessUnavailable();
       document.getElementById("import_file_input").click();
       return;
     }
@@ -611,6 +622,7 @@ a {
       } catch (e) {
         if (e && e.name === "AbortError") return; // キャンセル
         // ポリシー等でAPI自体がブロックされている場合は、従来方式にフォールバックする
+        markFsAccessUnavailable();
         legacyDownload();
         return;
       }
