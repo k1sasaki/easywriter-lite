@@ -579,7 +579,10 @@ a {
     try {
       [handle] = await window.showOpenFilePicker({ types: mdFileTypes });
     } catch (e) {
-      return; // ユーザーがキャンセルした場合など
+      if (e && e.name === "AbortError") return; // ユーザーがキャンセルした場合
+      // ポリシー等でAPI自体がブロックされている場合は、従来方式にフォールバックする
+      document.getElementById("import_file_input").click();
+      return;
     }
     var file = await handle.getFile();
     var text = await file.text();
@@ -606,7 +609,10 @@ a {
           types: mdFileTypes,
         });
       } catch (e) {
-        return; // キャンセル
+        if (e && e.name === "AbortError") return; // キャンセル
+        // ポリシー等でAPI自体がブロックされている場合は、従来方式にフォールバックする
+        legacyDownload();
+        return;
       }
     }
     if (!(await writeToHandle(handle))) return;
