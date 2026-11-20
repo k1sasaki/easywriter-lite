@@ -491,6 +491,17 @@ a {
               "|", "fullscreen", "|", "guide"],
   });
 
+  // CodeMirror(EasyMDE内蔵)は既定でviewportMargin:10のため、画面外の行はDOMに
+  // 描画されずブラウザの検索(Ctrl+F)が届かない。全行描画に切り替えるが、巨大な
+  // 文書では重くなるので行数が多いときだけ既定に戻す(本家EasyWriterで発見・
+  // 検証済みの不具合と同じ対応、2026-11-20)
+  var FIND_FRIENDLY_MAX_LINES = 3000;
+  function applyViewportMargin() {
+    var cm = easyMDE.codemirror;
+    cm.setOption("viewportMargin", cm.lineCount() <= FIND_FRIENDLY_MAX_LINES ? Infinity : 10);
+  }
+  applyViewportMargin();
+
   marked.setOptions({ gfm: true, breaks: false });
 
   var previewBody = document.getElementById("preview_body");
@@ -613,6 +624,7 @@ a {
     editorPathLabel.textContent = relPath;
     document.title = relPath + " — EasyWriter lite";
     easyMDE.value(text);
+    applyViewportMargin();
     updatePreview();
     formDirty = false;
   }
@@ -661,6 +673,7 @@ a {
       editorPathLabel.textContent = relPath;
       document.title = relPath + " — EasyWriter lite";
       easyMDE.value(reader.result);
+      applyViewportMargin();
       updatePreview();
       formDirty = false;
     };
@@ -777,6 +790,7 @@ a {
     editorPathLabel.textContent = relPath;
     document.title = relPath + " — EasyWriter lite";
     easyMDE.value(body);
+    applyViewportMargin();
     updatePreview();
     formDirty = false;
     saveStatus.textContent = "関連付けから読み込みました(保存は最初に「名前を付けて保存」を)";
