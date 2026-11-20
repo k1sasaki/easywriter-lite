@@ -433,7 +433,10 @@ a {
   // ブラウザはファイル選択ダイアログから元ファイルの本当のパスを教えてくれない
   // (セキュリティ上の制約で握りつぶされる)ので、手元の画像はWindowsのエクス
   // プローラーで「パスをコピー」した文字列を貼ってもらい、ここで file:/// URL
-  // に変換する。<img src="file:///...">は同一フォルダでなくても表示できる
+  // に変換する。<img src="file:///...">は同一フォルダでなくても表示できるが、
+  // これはこのページ自身がfile:///として開かれている場合に限る —
+  // https://で開いている場合(公開ページ本体やブックマークレット経由)は、
+  // ブラウザがfile:///への参照をブロックするため画像は表示されない(2026-11-20確認)
   function windowsPathToFileUrl(input) {
     var p = input.trim();
     if (/^".*"$/.test(p)) p = p.slice(1, -1);
@@ -448,7 +451,14 @@ a {
       ""
     );
     if (!input) return;
-    var url = windowsPathToFileUrl(input) || input;
+    var fileUrl = windowsPathToFileUrl(input);
+    if (fileUrl && location.protocol !== "file:") {
+      window.alert(
+        "このページはブラウザ上(https://)で開かれているため、パソコン内の画像は表示できません。\n" +
+        "表示するには、ダウンロードしたindex.htmlファイルを、パソコン上で直接(file:///として)開いてください。"
+      );
+    }
+    var url = fileUrl || input;
     if (!/%[0-9a-fA-F]{2}/.test(url)) {
       url = encodeURI(url);
     }
